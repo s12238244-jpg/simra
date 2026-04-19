@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeGuard | Simra's Quizzes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --success: #00f2fe;
+            --correct: #2ecc71;
+            --wrong: #e74c3c;
+            --glass: rgba(255, 255, 255, 0.9);
+            --dark-bg: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--dark-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: 0.8s ease-in-out;
+        }
+
+        #splash-screen.fade-out { opacity: 0; visibility: hidden; }
+
+        /* Main Game Card */
+        #game-container {
+            background: var(--glass);
+            color: #1e293b;
+            width: 95%;
+            max-width: 550px;
+            padding: 2.5rem;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        #game-container:hover {
+            transform: scale(1.01);
+            box-shadow: 0 0 40px rgba(0, 210, 255, 0.4);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Creative Scoreboard Header */
+        .live-board {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .board-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 12px;
+            transition: 0.4s;
+            border-left: 5px solid var(--primary);
+        }
+
+        .board-row.active {
+            background: #e0f7ff;
+            transform: translateX(10px);
+            border-left-color: #3a7bd5;
+        }
+
+        /* Feedback Overlay */
+        #feedback-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 30px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Buttons & Inputs */
+        input {
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            border: 2px solid #e2e8f0; border-radius: 15px; font-size: 1rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; padding: 15px 30px;
+            border-radius: 15px; cursor: pointer; font-weight: 700; width: 100%;
+            box-shadow: 0 4px 15px rgba(58, 123, 213, 0.3);
+        }
+
+        .option-btn {
+            background: white; border: 2px solid #f1f5f9; padding: 14px;
+            border-radius: 16px; cursor: pointer; width: 100%; margin-top: 10px;
+            text-align: left; transition: 0.2s; font-weight: 500;
+        }
+
+        .option-btn:hover { border-color: var(--primary); background: #f0f9ff; }
+
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <h1 style="font-size: 3.5rem; background: linear-gradient(to right, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Simra's Quizzes</h1>
+        <p style="color: #94a3b8; letter-spacing: 3px; font-weight: 300;">PREPARING YOUR ARENA</p>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <div id="start-screen">
+            <h1 style="color: var(--dark-bg); margin-bottom: 10px;">LifeGuard</h1>
+            <p style="color: #64748b; margin-bottom: 30px;">Battle through the 10 Lifestyle Management Challenges.</p>
+            <input type="text" id="username" placeholder="Your Full Name..." maxlength="20">
+            <button class="btn" onclick="startGame()">ENTER ARENA</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="live-board">
+                <p style="font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px;">Live Arena Standings</p>
+                <div id="scoreboard-list">
+                    </div>
+            </div>
+
+            <div class="progress-bar"><div id="progress-fill"></div></div>
+            <h3 id="question-text" style="margin-bottom: 20px;">Question?</h3>
+            <div id="options-container"></div>
+
+            <div id="feedback-overlay" class="hidden">
+                <h1 id="feedback-icon" style="font-size: 4rem;">✅</h1>
+                <h2 id="feedback-title">Correct!</h2>
+                <p id="feedback-msg" style="color: #64748b; margin: 15px 0;"></p>
+                <button class="btn" style="width: auto;" onclick="closeFeedback()">CONTINUE</button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h2 style="font-size: 2rem;">Challenge Complete!</h2>
+            <div id="final-stats" style="margin: 25px 0; font-size: 1.2rem;"></div>
+            <button class="btn" onclick="location.reload()">REPLAY SESSION</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "What is a 'Normal' Blood Pressure reading?", a: ["120/80 mmHg", "140/90 mmHg", "160/100 mmHg", "90/60 mmHg"], correct: 0, enc: "Keep that heart healthy!" },
+            { q: "Which habit is most damaging for CHD (Heart Disease)?", a: ["Daily Walking", "Smoking", "Drinking Water", "Meditation"], correct: 1, enc: "Breaking bad habits saves lives!" },
+            { q: "To manage Obesity, focus on energy balance and...", a: ["Sleeping 12 hours", "Physical activity", "High salt diet", "Skipping breakfast"], correct: 1, enc: "Movement is medicine!" },
+            { q: "HIV is NOT transmitted through...", a: ["Unprotected contact", "Sharing needles", "Handshakes", "Blood transfusion"], correct: 2, enc: "Knowledge ends stigma!" },
+            { q: "Which mineral should you limit for Hypertension?", a: ["Sodium (Salt)", "Potassium", "Magnesium", "Calcium"], correct: 0, enc: "Watch that salt intake!" },
+            { q: "A BMI over 30 is generally classified as?", a: ["Underweight", "Healthy", "Overweight", "Obese"], correct: 3, enc: "Health is a journey, not a number!" },
+            { q: "PrEP is a medication used to prevent?", a: ["Obesity", "HIV", "Common Cold", "Hypertension"], correct: 1, enc: "Science keeps us safe!" },
+            { q: "CHD is primarily caused by plaque in the...", a: ["Arteries", "Lungs", "Brain", "Liver"], correct: 0, enc: "Keep the flow clear!" },
+            { q: "Hypertension is often called the '_____ Killer'.", a: ["Fast", "Silent", "Hidden", "Loud"], correct: 1, enc: "Check your pressure regularly!" },
+            { q: "What is the best way to prevent Lifestyle Diseases?", a: ["Genetics only", "Healthy Lifestyle Choices", "Ignoring symptoms", "Sugar-heavy diet"], correct: 1, enc: "You are in control of your health!" }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+        let playerName = "";
+
+        // Fade splash screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('splash-screen').classList.add('fade-out');
+                document.getElementById('game-container').classList.remove('hidden');
+            }, 3000);
+        });
+
+        function startGame() {
+            playerName = document.getElementById('username').value.trim();
+            if (!playerName) return alert("Please enter your name to begin.");
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            updateScoreboard();
+            showQuestion();
+        }
+
+        function updateScoreboard() {
+            const board = document.getElementById('scoreboard-list');
+            // Creative display of your current progress
+            board.innerHTML = `
+                <div class="board-row active">
+                    <span style="font-weight: 700;">${playerName} (You)</span>
+                    <span style="color: var(--secondary); font-weight: 800;">${score} PTS</span>
+                </div>
+            `;
+        }
+
+        function showQuestion() {
+            const q = questions[currentQ];
+            document.getElementById('question-text').innerText = q.q;
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            document.getElementById('progress-fill').style.width = `${(currentQ / questions.length) * 100}%`;
+
+            q.a.forEach((opt, idx) => {
+                const b = document.createElement('button');
+                b.className = 'option-btn';
+                b.innerText = opt;
+                b.onclick = () => handleAnswer(idx);
+                container.appendChild(b);
+            });
+        }
+
+        function handleAnswer(idx) {
+            const overlay = document.getElementById('feedback-overlay');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const msg = document.getElementById('feedback-msg');
+            
+            overlay.classList.remove('hidden');
+            
+            if (idx === questions[currentQ].correct) {
+                score += 10;
+                icon.innerText = "✅";
+                title.innerText = "Correct!";
+                title.style.color = "var(--correct)";
+                msg.innerText = questions[currentQ].enc;
+            } else {
+                icon.innerText = "❌";
+                title.innerText = "Incorrect";
+                title.style.color = "var(--wrong)";
+                msg.innerText = "The correct answer was: " + questions[currentQ].a[questions[currentQ].correct];
+            }
+            
+            // This is where the "Live" update happens!
+            updateScoreboard();
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback-overlay').classList.add('hidden');
+            currentQ++;
+            if (currentQ < questions.length) {
+                showQuestion();
+            } else {
+                showEnd();
+            }
+        }
+
+        function showEnd() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('final-stats').innerHTML = `
+                <p>Final Score: <strong>${score}/100</strong></p>
+                <p style="font-size: 0.9rem; color: #64748b; margin-top: 10px;">${score >= 70 ? 'Amazing job, Lifestyle Leader!' : 'Good effort! Replay to master these strategies.'}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
